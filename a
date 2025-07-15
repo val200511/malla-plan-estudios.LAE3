@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mapa Conceptual - Administración UNR</title>
+  <script src="https://unpkg.com/cytoscape@3.24.0/dist/cytoscape.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background-color: #f0f6ff;
+    }
+    #cy {
+      width: 100vw;
+      height: 100vh;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div id="cy"></div>
+
+  <script>
+    const materias = {
+      "1.01": { nombre: "Intro. Ciencias Sociales", correlativas: [] },
+      "1.02": { nombre: "Intro. Economía", correlativas: [] },
+      "1.03": { nombre: "Intro. Administración", correlativas: [] },
+      "1.04": { nombre: "Derecho Const. y Adm.", correlativas: [] },
+      "1.05": { nombre: "Intro. Contabilidad", correlativas: [] },
+      "1.06": { nombre: "Intro. Matemática", correlativas: [] },
+      "1.07": { nombre: "Inst. Derecho Privado", correlativas: [] },
+      "2.01": { nombre: "Matemática p/ Cont. y Adm.", correlativas: ["1.06"] },
+      "2.08": { nombre: "Administración General", correlativas: ["1.03"] },
+      "2.09": { nombre: "Tecnología de la Inf. I", correlativas: ["1.01", "1.03"] },
+      "2.11": { nombre: "Adm. de las Operaciones", correlativas: ["2.08", "2.01"] },
+      "2.12": { nombre: "Microeconomía", correlativas: ["1.02"] },
+      "2.13": { nombre: "Contabilidad para Adm.", correlativas: ["1.05"] },
+      "2.14": { nombre: "Relaciones Laborales", correlativas: ["1.04"] },
+      "3.15": { nombre: "Sistemas Administrativos", correlativas: ["2.08", "2.09"] },
+      "3.16": { nombre: "Sociedades y Asoc.", correlativas: ["1.04", "1.07"] },
+      "3.17": { nombre: "Estadística para Adm.", correlativas: ["2.01"] },
+      "3.18": { nombre: "Sociología para Org.", correlativas: [] },
+      "3.19": { nombre: "Análisis de EECC", correlativas: ["2.13"] },
+      "3.20": { nombre: "Microeconomía II", correlativas: ["2.12"] },
+      "3.21": { nombre: "Tecnología Inf. II", correlativas: ["2.09", "3.15"] },
+      "3.22": { nombre: "Matemática Financiera", correlativas: ["2.01"] }
+    };
+
+    const aprobadas = JSON.parse(localStorage.getItem("materiasAprobadas")) || [];
+
+    const elementos = [];
+    Object.entries(materias).forEach(([id, data]) => {
+      elementos.push({
+        data: { id: id, label: `${id}\n${data.nombre}` },
+        classes: aprobadas.includes(id) ? 'aprobada' : 'pendiente'
+      });
+      data.correlativas.forEach(cor => {
+        elementos.push({ data: { source: cor, target: id } });
+      });
+    });
+
+    const cy = cytoscape({
+      container: document.getElementById('cy'),
+      elements: elementos,
+      style: [
+        {
+          selector: 'node',
+          style: {
+            'background-color': '#007BFF',
+            'label': 'data(label)',
+            'color': '#fff',
+            'text-valign': 'center',
+            'text-halign': 'center',
+            'width': 'label',
+            'height': 'label',
+            'padding': '10px',
+            'shape': 'round-rectangle',
+            'font-size': '10px'
+          }
+        },
+        {
+          selector: 'node.aprobada',
+          style: {
+            'background-color': '#003d80'
+          }
+        },
+        {
+          selector: 'edge',
+          style: {
+            'width': 2,
+            'line-color': '#ccc',
+            'target-arrow-color': '#ccc',
+            'target-arrow-shape': 'triangle'
+          }
+        }
+      ],
+      layout: {
+        name: 'cose',
+        padding: 30
+      }
+    });
+
+    cy.on('tap', 'node', function(evt){
+      const id = evt.target.id();
+      if (!aprobadas.includes(id)) {
+        aprobadas.push(id);
+      } else {
+        aprobadas.splice(aprobadas.indexOf(id), 1);
+      }
+      localStorage.setItem("materiasAprobadas", JSON.stringify(aprobadas));
+      location.reload();
+    });
+  </script>
+</body>
+</html>
